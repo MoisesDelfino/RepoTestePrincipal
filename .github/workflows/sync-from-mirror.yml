@@ -26,18 +26,28 @@ jobs:
           git config user.name "MoisesDelfino"
           git config user.email "moisescamposdelfino@gmail.com"
 
-      - name: Sync com autoria forçada
+      - name: Sync com autoria forçada (corrigido)
         run: |
-          # Backup atual
-          git stash push -m "before sync"
+          # DEBUG: mostra diferenças
+          echo "=== Diferenças entre repos ==="
+          git diff --name-status master mirror/main
           
-          # Pega mudanças do B
+          # Pega TODAS mudanças: novos, modificados, deletados
           git fetch mirror
-          git diff --name-only master mirror/main | xargs git checkout mirror/main --
+          MAPFILE=files < <(git diff --name-only --diff-filter=AMDR master mirror/main)
           
-          # Commit FORÇADO como principal
+          # Aplica cada arquivo alterado/novo do Repo B
+          for file in "${files[@]}"; do
+            echo "Atualizando: $file"
+            git checkout mirror/main -- "$file" || true
+          done
+          
+          # Commit se houver mudanças
           git add .
-          git commit -m "Sync from mirror - $(date)" \
-            --author="MoisesDelfino <moisescamposdelfino@gmail.com>" || true
-          
-          git push origin master
+          if git diff --staged --quiet; then
+            echo "Nenhuma mudança para sincronizar"
+          else
+            git commit -m "Sync from mirror - $(date '+%Y-%m-%d %H:%M')" \
+              --author="MoisesDelfino <moisescamposdelfino@gmail.com>"
+            git push origin master
+          fi
