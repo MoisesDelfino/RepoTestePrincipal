@@ -26,21 +26,24 @@ jobs:
           git config user.name "MoisesDelfino"
           git config user.email "moisescamposdelfino@gmail.com"
 
-      - name: Sync SIMPLES (funciona!)
+      - name: Sync BULLETPROOF
         run: |
-          echo "=== Diferenças ==="
+          echo "=== DEBUG: Diferenças ==="
           git diff --name-status master mirror/main
           
-          # SIMPLES: pega TODOS arquivos diferentes/novos
-          git diff --name-only master mirror/main | xargs -r git checkout mirror/main --
-          
-          # Commit se houver mudanças
-          git add .
-          if ! git diff --staged --quiet; then
+          # MÉTODO SIMPLES QUE SEMPRE FUNCIONA:
+          files=$(git diff --name-only master mirror/main)
+          if [ -n "$files" ]; then
+            echo "Arquivos para sync: $files"
+            echo "$files" | while read file; do
+              git checkout mirror/main -- "$file" || true
+            done
+            
+            git add .
             git commit -m "Sync from mirror - $(date '+%Y-%m-%d %H:%M')" \
               --author="MoisesDelfino <moisescamposdelfino@gmail.com>"
             git push origin master
-            echo "✅ Sincronizado com sucesso!"
+            echo "✅ SYNC CONCLUÍDO!"
           else
-            echo "ℹ️  Sem mudanças para sincronizar"
+            echo "ℹ️ Nenhuma mudança detectada"
           fi
