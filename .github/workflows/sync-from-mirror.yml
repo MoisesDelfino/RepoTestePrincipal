@@ -26,28 +26,21 @@ jobs:
           git config user.name "MoisesDelfino"
           git config user.email "moisescamposdelfino@gmail.com"
 
-      - name: Sync com autoria forçada (corrigido)
+      - name: Sync SIMPLES (funciona!)
         run: |
-          # DEBUG: mostra diferenças
-          echo "=== Diferenças entre repos ==="
+          echo "=== Diferenças ==="
           git diff --name-status master mirror/main
           
-          # Pega TODAS mudanças: novos, modificados, deletados
-          git fetch mirror
-          MAPFILE=files < <(git diff --name-only --diff-filter=AMDR master mirror/main)
-          
-          # Aplica cada arquivo alterado/novo do Repo B
-          for file in "${files[@]}"; do
-            echo "Atualizando: $file"
-            git checkout mirror/main -- "$file" || true
-          done
+          # SIMPLES: pega TODOS arquivos diferentes/novos
+          git diff --name-only master mirror/main | xargs -r git checkout mirror/main --
           
           # Commit se houver mudanças
           git add .
-          if git diff --staged --quiet; then
-            echo "Nenhuma mudança para sincronizar"
-          else
+          if ! git diff --staged --quiet; then
             git commit -m "Sync from mirror - $(date '+%Y-%m-%d %H:%M')" \
               --author="MoisesDelfino <moisescamposdelfino@gmail.com>"
             git push origin master
+            echo "✅ Sincronizado com sucesso!"
+          else
+            echo "ℹ️  Sem mudanças para sincronizar"
           fi
