@@ -26,17 +26,18 @@ jobs:
           git config user.name "MoisesDelfino"
           git config user.email "moisescamposdelfino@gmail.com"
 
-      - name: Merge + recommit com autoria correta
+      - name: Sync com autoria forçada
         run: |
-          # 1. Faz merge das mudanças (mantém arquivos locais)
-          git merge mirror/main --no-edit --allow-unrelated-histories || true
+          # Backup atual
+          git stash push -m "before sync"
           
-          # 2. Aplica mudanças do Repo B preferencialmente
-          git checkout mirror/main -- .
+          # Pega mudanças do B
+          git fetch mirror
+          git diff --name-only master mirror/main | xargs git checkout mirror/main --
           
-          # 3. CRIA NOVO COMMIT com autoria do usuário principal
+          # Commit FORÇADO como principal
           git add .
-          git commit -m "Sync from mirror - $(date '+%Y-%m-%d %H:%M')" --author="MoisesDelfino <moisescamposdelfino@gmail.com>" || true
+          git commit -m "Sync from mirror - $(date)" \
+            --author="MoisesDelfino <moisescamposdelfino@gmail.com>" || true
           
-          # 4. Push
           git push origin master
