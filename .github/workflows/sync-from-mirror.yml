@@ -13,7 +13,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_SYNC }}
           ref: master
-          fetch-depth: 0  # histórico completo para merge
+          fetch-depth: 0
 
       - name: Configurar remote do Repo B
         run: |
@@ -26,16 +26,17 @@ jobs:
           git config user.name "MoisesDelfino"
           git config user.email "moisescamposdelfino@gmail.com"
 
-      - name: Merge mudanças do Repo B (mantém arquivos locais)
+      - name: Merge + recommit com autoria correta
         run: |
-          # Merge só os commits NOVOS do Repo B
+          # 1. Faz merge das mudanças (mantém arquivos locais)
           git merge mirror/main --no-edit --allow-unrelated-histories || true
           
-          # Se houve conflitos, aplica mudanças do Repo B preferencialmente
+          # 2. Aplica mudanças do Repo B preferencialmente
           git checkout mirror/main -- .
           
-          # Commit com autoria do principal
+          # 3. CRIA NOVO COMMIT com autoria do usuário principal
           git add .
-          git commit -m "Sync from mirror - $(date '+%Y-%m-%d %H:%M')" || true
+          git commit -m "Sync from mirror - $(date '+%Y-%m-%d %H:%M')" --author="MoisesDelfino <moisescamposdelfino@gmail.com>" || true
           
+          # 4. Push
           git push origin master
